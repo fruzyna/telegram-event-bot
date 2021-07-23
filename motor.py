@@ -133,19 +133,20 @@ def read_msg(msg):
 
 # thread to update list of races every day
 def add_races(bot):
-    # TODO IMSA, SRX (don't have ESPN schedules)
-    races = process_espn("https://www.espn.com/racing/schedule", "NCS")
-    races += process_espn("https://www.espn.com/racing/schedule/_/series/xfinity", "NXS")
-    races += process_espn("https://www.espn.com/racing/schedule/_/series/camping", "NCWTS")
-    races += process_espn("https://www.espn.com/racing/schedule/_/series/indycar", "INDY")
-    races += process_espn_f1("https://www.espn.com/f1/schedule", "F1")
-    races.sort(key=lambda r: r['datetime'])
-    bot.update_events(races)
+    while True:
+        # TODO IMSA, SRX (don't have ESPN schedules)
+        races = process_espn("https://www.espn.com/racing/schedule", "NCS")
+        races += process_espn("https://www.espn.com/racing/schedule/_/series/xfinity", "NXS")
+        races += process_espn("https://www.espn.com/racing/schedule/_/series/camping", "NCWTS")
+        races += process_espn("https://www.espn.com/racing/schedule/_/series/indycar", "INDY")
+        races += process_espn_f1("https://www.espn.com/f1/schedule", "F1")
+        races.sort(key=lambda r: r['datetime'])
+        bot.update_events(races)
 
-    sleep(60 * 60 * 24)
+        sleep(60 * 60 * 24)
 
 # start all threads, give add_races a chance before other threads start
-Thread(target=add_games, args=(bot,)).start()
+Thread(target=add_races, args=(bot,)).start()
 sleep(10)
 Thread(target=bot.update_thread, args=(MOTOR_CHANNEL,)).start()
 

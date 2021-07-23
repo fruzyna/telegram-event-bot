@@ -89,13 +89,14 @@ def read_msg(msg):
 
 # thread to update list of games every day
 def add_games(bot):
-    games = process_espn("https://www.espn.com/mlb/team/schedule/_/name/chc", "CUBS")
-    games += process_espn("https://www.espn.com/nhl/team/schedule/_/name/chi", "BLKH")
-    games += process_espn("https://www.espn.com/mens-college-basketball/team/schedule/_/id/269", "MUBB")
-    games.sort(key=lambda r: r['datetime'])
-    bot.update_events(games)
+    while True:
+        games = process_espn("https://www.espn.com/mlb/team/schedule/_/name/chc", "CUBS")
+        games += process_espn("https://www.espn.com/nhl/team/schedule/_/name/chi", "BLKH")
+        games += process_espn("https://www.espn.com/mens-college-basketball/team/schedule/_/id/269", "MUBB")
+        games.sort(key=lambda r: r['datetime'])
+        bot.update_events(games)
 
-    sleep(60 * 60 * 24)
+        sleep(60 * 60 * 24)
 
 # start all threads, give add_games a chance before other threads start
 Thread(target=add_games, args=(bot,)).start()

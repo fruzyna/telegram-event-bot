@@ -26,15 +26,16 @@ class EventBot:
     # then posts to the passed in channel
     # can be filtered by event group so that individual channels can be created for each group 
     def update_thread(self, channel, group=''):
-        now = datetime.now()
-        
-        for event in self.events:
-            if event['datetime'] < now + timedelta(minutes=15) and event['datetime'] > now + timedelta(minutes=10) \
-                and (not group or event['group'].upper() == group.upper()):
-                self.tb.send_message(channel, self.build_msg(event))
+        while True:
+            now = datetime.now()
+            
+            for event in self.events:
+                if event['datetime'] > now + timedelta(minutes=10) and event['datetime'] < now + timedelta(minutes=15) \
+                    and (not group or event['group'].upper() == group.upper()):
+                    self.tb.send_message(channel, self.build_msg(event))
 
-        # run every 5 minutes
-        sleep(60 * 5)
+            # run every 5 minutes
+            sleep(60 * 5)
 
     # poll so that incoming direct messages can be received
     def listen(self):
