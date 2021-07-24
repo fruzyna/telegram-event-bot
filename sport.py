@@ -49,12 +49,28 @@ def process_espn(url, label):
                         elif i == 2:
                             game += " {}".format(s)
 
+                    # determine TV channel if string
+                    if cells[3].string:
+                        tv = cells[3].string
+                    else:
+                        tv = 'Local'
+
+                    # determine TV
+                    if cells[3].figure:
+                        tvfig = cells[3].figure['class']
+                        if 'network-abc' in tvfig:
+                            tv = 'ABC'
+                        elif 'network-espn+' in tvfig:
+                            tv = 'ESPN+'
+                        elif 'network-espn' in tvfig:
+                            tv = 'ESPN'
+
                     # combine into EventBot compatible dictionary
                     games.append({
                         'group': label,
                         'event': game,
                         'datetime': dt,
-                        'channel': '',
+                        'channel': tv
                     })
 
     return games

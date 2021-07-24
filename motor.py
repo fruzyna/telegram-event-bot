@@ -103,6 +103,45 @@ def process_espn_f1(url, label):
 
     return races
 
+# processes schedules from IMSA
+def process_imsa(url, label):
+    races = []
+
+    # get rows of table
+    page = urlopen(url)
+    html = page.read().decode("utf-8")
+    soup = BeautifulSoup(html, "html.parser")
+    rows = soup.find_all("div", class_="rich-text-component-container")
+    rows.pop(0)
+
+    for row in rows:
+        name = row.find("a", class_="onTv-event-title").string
+        date = row.find("span", class_="date-display-single").string.split(' -')[0]
+        dt = datetime.strptime(date, '%A, %B %d, %Y – %I:%M %p')
+        dt = dt - timedelta(hours=1)
+
+        # determine TV channel by image
+        tvimg = row.img['src'].upper()
+        tv = 'IMSA TV'
+        if 'TRACKPASS' in tvimg:
+            tv = 'TrackPass'
+        elif 'NBCSN' in tvimg:
+            tv = 'NBCSN'
+        elif 'NBC' in tvimg:
+            tv = 'NBC'
+
+        # combine into EventBot compatible dictionary
+        # if not qualifying
+        if "QUALIFYING" not in name.upper():
+            races.append({
+                'group': label,
+                'event': name,
+                'datetime': dt,
+                'channel': tv
+            })
+
+    return races
+
 # create bot
 bot = EventBot(TOKEN, "Motorsport Bot", "It sources NASCAR, IndyCar, and F1 schedules from ESPN.com", "series", "race")
 
@@ -134,12 +173,12 @@ def read_msg(msg):
 # thread to update list of races every day
 def add_races(bot):
     while True:
-        # TODO IMSA, SRX (don't have ESPN schedules)
         races = process_espn("https://www.espn.com/racing/schedule", "NCS")
         races += process_espn("https://www.espn.com/racing/schedule/_/series/xfinity", "NXS")
         races += process_espn("https://www.espn.com/racing/schedule/_/series/camping", "NCWTS")
         races += process_espn("https://www.espn.com/racing/schedule/_/series/indycar", "INDY")
         races += process_espn_f1("https://www.espn.com/f1/schedule", "F1")
+        races += process_imsa("https://www.imsa.com/weathertech/tv-streaming-schedule/", "IMSA")
         races.sort(key=lambda r: r['datetime'])
         bot.update_events(races)
 
