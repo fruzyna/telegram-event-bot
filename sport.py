@@ -111,14 +111,14 @@ def add_games(bot):
         games += process_espn("https://www.espn.com/mens-college-basketball/team/schedule/_/id/269", "MUBB")
         games.sort(key=lambda r: r['datetime'])
         bot.update_events(games)
+        bot.schedule_alerts(CUBS_CHANNEL, "CUBS")
+        bot.schedule_alerts(MUBB_CHANNEL, "MUBB")
+        bot.schedule_alerts(BLKH_CHANNEL, "BLKH")
 
         sleep(60 * 60 * 24)
 
 # start all threads, give add_games a chance before other threads start
 Thread(target=add_games, args=(bot,)).start()
 sleep(10)
-Thread(target=bot.update_thread, args=(CUBS_CHANNEL, "CUBS")).start()
-Thread(target=bot.update_thread, args=(MUBB_CHANNEL, "MUBB")).start()
-Thread(target=bot.update_thread, args=(BLKH_CHANNEL, "BLKH")).start()
 
 bot.listen()

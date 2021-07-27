@@ -1,6 +1,7 @@
 import telebot
 from datetime import datetime, timedelta
-from time import sleep
+from time import sleep, time
+from sched import scheduler
 
 # generic event bot, used for notifying of upcoming events within 30 minutes before
 class EventBot:
@@ -22,20 +23,22 @@ class EventBot:
     def build_msg(self, event):
         return "[{}] {} @ {} on {}".format(event['group'], event['event'], str(event['datetime']), event['channel'])
 
-    # thread to check for upcoming events 10-15 minutes before hand
+    # schedules alerts for upcoming events 10 minutes before hand
     # then posts to the passed in channel
     # can be filtered by event group so that individual channels can be created for each group 
-    def update_thread(self, channel, group=''):
-        while True:
-            now = datetime.now()
-            
-            for event in self.events:
-                if event['datetime'] > now + timedelta(minutes=10) and event['datetime'] < now + timedelta(minutes=15) \
-                    and (not group or event['group'].upper() == group.upper()):
-                    self.tb.send_message(channel, self.build_msg(event))
+    def schedule_alerts(self, channel, group=''):
+        now = datetime.now()
+        
+        s = scheduler(time, sleep)
+        for event in self.events:
+            dt = event['datetime']
+            if dt > now and dt < now + timedelta(hours=24) \
+                and (not group or event['group'].upper() == group.upper()):
+                msg = self.build_msg(event)
+                in_secs = (dt - timedelta(minutes=10) - now).total_seconds()
+                s.enter(in_secs, 1, self.tb.send_message, (channel, msg))
 
-            # run every 5 minutes
-            sleep(60 * 5)
+        s.run()
 
     # poll so that incoming direct messages can be received
     def listen(self):

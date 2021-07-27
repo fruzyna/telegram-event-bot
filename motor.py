@@ -181,12 +181,12 @@ def add_races(bot):
         races += process_imsa("https://www.imsa.com/weathertech/tv-streaming-schedule/", "IMSA")
         races.sort(key=lambda r: r['datetime'])
         bot.update_events(races)
+        bot.schedule_alerts(MOTOR_CHANNEL)
 
         sleep(60 * 60 * 24)
 
 # start all threads, give add_races a chance before other threads start
 Thread(target=add_races, args=(bot,)).start()
 sleep(10)
-Thread(target=bot.update_thread, args=(MOTOR_CHANNEL,)).start()
 
 bot.listen()
