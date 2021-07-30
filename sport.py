@@ -10,6 +10,7 @@ from time import sleep
 
 # define channels and bot token
 CUBS_CHANNEL = -0
+RSOX_CHANNEL = -0 
 MUBB_CHANNEL = -0
 BLKH_CHANNEL = -0
 TOKEN = ""
@@ -107,11 +108,13 @@ def read_msg(msg):
 def add_games(bot):
     while True:
         games = process_espn("https://www.espn.com/mlb/team/schedule/_/name/chc", "CUBS")
+        games += process_espn("https://www.espn.com/mlb/team/schedule/_/name/bos", "RSOX")
         games += process_espn("https://www.espn.com/nhl/team/schedule/_/name/chi", "BLKH")
         games += process_espn("https://www.espn.com/mens-college-basketball/team/schedule/_/id/269", "MUBB")
         games.sort(key=lambda r: r['datetime'])
         bot.update_events(games)
         bot.schedule_alerts(CUBS_CHANNEL, "CUBS")
+        bot.schedule_alerts(RSOX_CHANNEL, "RSOX")
         bot.schedule_alerts(MUBB_CHANNEL, "MUBB")
         bot.schedule_alerts(BLKH_CHANNEL, "BLKH")
 
