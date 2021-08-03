@@ -84,6 +84,11 @@ bot = EventBot(TOKEN, "Stick and Ball Bot", "It sources Cubs, Blackhawks, and Ma
 def read_msg(msg):
     bot.next_msg(msg)
 
+# handle /last
+@bot.tb.message_handler(commands=['last'])
+def read_msg(msg):
+    bot.last_msg(msg)
+
 # handle /time
 @bot.tb.message_handler(commands=['time'])
 def read_msg(msg):

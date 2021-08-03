@@ -44,9 +44,8 @@ class EventBot:
     def listen(self):
         self.tb.polling()
 
-    # responds to next event messages
-    # messages can have a group and number of events to list
-    def next_msg(self, msg):
+    # process arguments for next and last commands
+    def process_args(self, msg):
         # process arguments
         text = msg.text.strip()
         group = ''
@@ -61,12 +60,35 @@ class EventBot:
                 count = int(words[1])
             else:
                 group = words[1].upper()
+        return group, count
+
+    # responds to next event messages
+    # messages can have a group and number of events to list
+    def next_msg(self, msg):
+        group, count = self.process_args(msg)
 
         # filter events
         selected = filter(lambda event: event['datetime'] > datetime.now() and (not group or event['group'] == group), self.events)
         selected = list(selected)[:count]
 
         # build and send message
+        self.send_message(selected, group, msg)
+
+    # responds to last event messages
+    # messages can have a group and number of events to list
+    def last_msg(self, msg):
+        group, count = self.process_args(msg)
+
+        # filter events
+        selected = filter(lambda event: event['datetime'] < datetime.now() and (not group or event['group'] == group), self.events)
+        selected = list(selected)[-count:]
+
+        # build and send message
+        self.send_message(selected, group, msg)
+
+
+    # send a message containing several events
+    def send_message(self, selected, group, msg):
         toSend = ''
         for i, game in enumerate(selected):
             if i > 0:

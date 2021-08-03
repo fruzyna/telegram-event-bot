@@ -150,6 +150,11 @@ bot = EventBot(TOKEN, "Motorsport Bot", "It sources NASCAR, IndyCar, and F1 sche
 def read_msg(msg):
     bot.next_msg(msg)
 
+# handle /last
+@bot.tb.message_handler(commands=['last'])
+def read_msg(msg):
+    bot.last_msg(msg)
+
 # handle /time
 @bot.tb.message_handler(commands=['time'])
 def read_msg(msg):
