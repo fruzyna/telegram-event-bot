@@ -15,6 +15,10 @@ MUBB_CHANNEL = -0
 BLKH_CHANNEL = -0
 TOKEN = ""
 
+# flatten a list of lists
+def flatten(l):
+    return [item for sublist in l for item in sublist]
+
 # processes schedules from ESPN.com
 def process_espn(url, label):
     games = []
@@ -51,20 +55,29 @@ def process_espn(url, label):
                             game += " {}".format(s)
 
                     # determine TV channel if string
+                    chans = []
                     if cells[3].string:
-                        tv = cells[3].string
+                        chans.append(cells[3].string)
+
+                    # determine TV channel from image
+                    classes = []
+                    classes = flatten([i['class'] for i in cells[3].find_all(['figure', 'img'])])
+                    classes = list(filter(lambda c: c.startswith('network-'), classes))
+
+                    if classes:
+                        if 'network-abc' in classes:
+                            chans.append('ABC')
+                        if 'network-espn+' in classes:
+                            chans.append('ESPN+')
+                        if 'network-espn' in classes:
+                            chans.append('ESPN')
+                        if 'network-hulu' in classes:
+                            chans.append('Hulu')
+
+                    if chans:
+                        tv = ', '.join(chans)
                     else:
                         tv = 'Local'
-
-                    # determine TV
-                    if cells[3].figure:
-                        tvfig = cells[3].figure['class']
-                        if 'network-abc' in tvfig:
-                            tv = 'ABC'
-                        elif 'network-espn+' in tvfig:
-                            tv = 'ESPN+'
-                        elif 'network-espn' in tvfig:
-                            tv = 'ESPN'
 
                     # combine into EventBot compatible dictionary
                     games.append({
