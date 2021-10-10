@@ -42,7 +42,12 @@ class EventBot:
 
     # poll so that incoming direct messages can be received
     def listen(self):
-        self.tb.polling()
+        try:
+            self.tb.polling()
+        except KeyboardInterrupt:
+            return
+        except:
+            self.listen()
 
     # process arguments for next and last commands
     def process_args(self, msg):

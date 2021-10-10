@@ -191,7 +191,7 @@ def add_races(bot):
         sleep(60 * 60 * 24)
 
 # start all threads, give add_races a chance before other threads start
-Thread(target=add_races, args=(bot,)).start()
+Thread(target=add_races, daemon=True, args=(bot,)).start()
 sleep(10)
 
 bot.listen()

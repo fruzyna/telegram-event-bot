@@ -139,7 +139,7 @@ def add_games(bot):
         sleep(60 * 60 * 24)
 
 # start all threads, give add_games a chance before other threads start
-Thread(target=add_games, args=(bot,)).start()
+Thread(target=add_games, daemon=True, args=(bot,)).start()
 sleep(10)
 
 bot.listen()
