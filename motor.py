@@ -142,6 +142,36 @@ def process_imsa(url, label):
 
     return races
 
+# processes schedules from ENASCAR.com
+def process_enascar(url, label):
+    races = []
+
+    # get rows of table
+    page = urlopen(url)
+    html = page.read().decode("utf-8")
+    soup = BeautifulSoup(html, "html.parser")
+    rows = soup.find_all("div", class_='tableRowContainer', recursive=True)
+    rows.pop(0)
+
+    for row in rows:
+        name = row.find('div', class_='trackCell').string
+        watch = row.find('div', class_='watchCell').string
+
+        # time only listed for upcoming events
+        if 'on' in watch:
+            parts = watch.split()
+            date = '{0} {1}'.format(row.find('div', class_='dateCell').string, parts[0])
+            dt = datetime.strptime(date, '%B %d, %Y %I%p')
+            dt = dt - timedelta(hours=1)
+            races.append({
+                'group': label,
+                'event': name,
+                'datetime': dt,
+                'channel': parts[-1]
+            })
+
+    return races
+
 # create bot
 bot = EventBot(TOKEN, "Motorsport Bot", "It sources NASCAR, IndyCar, and F1 schedules from ESPN.com", "series", "race")
 
@@ -184,6 +214,7 @@ def add_races(bot):
         races += process_espn("https://www.espn.com/racing/schedule/_/series/indycar", "INDY")
         races += process_espn_f1("https://www.espn.com/f1/schedule", "F1")
         races += process_imsa("https://www.imsa.com/weathertech/tv-streaming-schedule/", "IMSA")
+        races += process_enascar("https://www.enascar.com/schedule/", "ENAS")
         races.sort(key=lambda r: r['datetime'])
         bot.update_events(races)
         bot.schedule_alerts(MOTOR_CHANNEL)
