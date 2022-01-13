@@ -114,7 +114,12 @@ class EventBot:
 
     # respond to help message with help text
     def help_msg(self, msg):
-            self.tb.reply_to(msg, "/next [{}] [count] - next {}\n/time - bot's time\n/about - info about bot\n/help - this help text".format(self.groupType, self.eventType))
+            self.tb.reply_to(msg, "/next [{}] [count] - next {}\n/time - bot's time\n/about - info about bot\n/help - this help text\n/groups - list teams/sports available".format(self.groupType, self.eventType))
+
+    # respond to groups message with list of groups
+    def groups_msg(self, msg):
+            print([event['group'] for event in self.events])
+            self.tb.reply_to(msg, "Groups:\n{}".format('\n'.join(list(set([event['group'] for event in self.events])))))
 
     # respond to any other messages with an error message
     def default_msg(self, msg):

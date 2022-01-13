@@ -57,12 +57,16 @@ def process_espn(url, label):
                 dt = dt.replace(year=datetime.now().year)
                 dt = dt - timedelta(hours=1)
 
+                tv = cells[2].string
+                if tv is None:
+                    tv = 'Unknown'
+
                 # combine into EventBot compatible dictionary
                 races.append({
                     'group': label,
                     'event': race,
                     'datetime': dt,
-                    'channel': cells[2].string
+                    'channel': tv
                 })
 
     return races
@@ -93,12 +97,16 @@ def process_espn_f1(url, label):
                 if not race:
                     race = s
 
+            tv = cells[3].string
+            if tv is None:
+                tv = 'Unknown'
+
             # combine into EventBot compatible dictionary
             races.append({
                 'group': label,
                 'event': race,
                 'datetime': dt,
-                'channel': cells[3].string
+                'channel': tv
             })
 
     return races
@@ -115,7 +123,7 @@ def process_imsa(url, label):
     rows.pop(0)
 
     for row in rows:
-        name = row.find("a", class_="onTv-event-title").string
+        name = row.find("a", class_="onTv-event-title").string.strip()
         date = row.find("span", class_="date-display-single").string.split(' -')[0]
         dt = datetime.strptime(date, '%A, %B %d, %Y – %I:%M %p')
         dt = dt - timedelta(hours=1)
@@ -125,20 +133,35 @@ def process_imsa(url, label):
         tv = 'IMSA TV'
         if 'TRACKPASS' in tvimg:
             tv = 'TrackPass'
-        elif 'NBCSN' in tvimg:
-            tv = 'NBCSN'
+        elif 'PEACOCK' in tvimg:
+            tv = 'Peacock'
         elif 'NBC' in tvimg:
             tv = 'NBC'
 
         # combine into EventBot compatible dictionary
         # if not qualifying
-        if "QUALIFYING" not in name.upper():
+        #if "QUALIFYING" not in name.upper():
+        # hide second day broadcasts starting at midnight eastern
+        if dt.hour != 23 or dt.minute != 0:
             races.append({
                 'group': label,
                 'event': name,
                 'datetime': dt,
                 'channel': tv
             })
+
+    # remove duplicate listings where one is IMSA TV
+    remove = []
+    for i in range(len(races)):
+        if i + 1 < len(races):
+            if abs(races[i]['datetime'] - races[i+1]['datetime']) < timedelta(minutes=30) and (races[i]['channel'] == 'IMSA TV' or races[i+1]['channel'] == 'IMSA TV') and (races[i]['channel'] != 'IMSA TV' or races[i+1]['channel'] != 'IMSA TV'):
+                if races[i]['channel'] == 'IMSA TV':
+                    remove.append(i)
+                elif races[i+1]['channel'] == 'IMSA TV':
+                    remove.append(i+1)
+
+    for i in sorted(remove, reverse=True):
+        del races[i]
 
     return races
 
@@ -199,6 +222,11 @@ def read_msg(msg):
 @bot.tb.message_handler(commands=['help'])
 def read_msg(msg):
     bot.help_msg(msg)
+
+# handle /groups
+@bot.tb.message_handler(commands=['groups'])
+def read_msg(msg):
+    bot.groups_msg(msg)
 
 # handle all other messages
 @bot.tb.message_handler(func=lambda _: True)

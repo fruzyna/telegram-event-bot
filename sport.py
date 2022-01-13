@@ -47,12 +47,7 @@ def process_espn(url, label):
                     dt = dt - timedelta(hours=1)
 
                     # interpret opponent as game
-                    game = ''
-                    for i, s in enumerate(cells[1].strings):
-                        if i == 0:
-                            game = s
-                        elif i == 2:
-                            game += " {}".format(s)
+                    game = cells[1].text
 
                     # determine TV channel if string
                     chans = []
@@ -116,6 +111,11 @@ def read_msg(msg):
 @bot.tb.message_handler(commands=['help'])
 def read_msg(msg):
     bot.help_msg(msg)
+
+# handle /groups
+@bot.tb.message_handler(commands=['groups'])
+def read_msg(msg):
+    bot.groups_msg(msg)
 
 # handle all other messages
 @bot.tb.message_handler(func=lambda _: True)
