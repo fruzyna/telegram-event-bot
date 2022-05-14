@@ -1,4 +1,4 @@
-import telebot
+import telebot, logging
 from datetime import datetime, timedelta
 from time import sleep, time
 from sched import scheduler
@@ -17,6 +17,7 @@ class EventBot:
 
     # update the list of available events
     def update_events(self, events):
+        logging.info('Updating events')
         self.events = events
 
     # build a message
@@ -27,6 +28,7 @@ class EventBot:
     # then posts to the passed in channel
     # can be filtered by event group so that individual channels can be created for each group 
     def schedule_alerts(self, channel, group=''):
+        logging.info('Scheduling alerts')
         now = datetime.now()
         
         s = scheduler(time, sleep)
@@ -36,6 +38,7 @@ class EventBot:
                 and (not group or event['group'].upper() == group.upper()):
                 msg = self.build_msg(event)
                 in_secs = (dt - timedelta(minutes=10) - now).total_seconds()
+                logging.info(f"Scheduling '{msg}' for {in_secs} secs from now")
                 s.enter(in_secs, 1, self.tb.send_message, (channel, msg))
 
         s.run()
@@ -43,10 +46,13 @@ class EventBot:
     # poll so that incoming direct messages can be received
     def listen(self):
         try:
+            logging.info('Polling')
             self.tb.polling()
         except KeyboardInterrupt:
+            logging.info('Keyboard interrupt')
             return
-        except:
+        except Exception as e:
+            logging.info('Exception, restarting', e)
             self.listen()
 
     # process arguments for next and last commands
@@ -102,11 +108,17 @@ class EventBot:
         if len(selected) == 0:
             toSend = "No {} {}s found".format(group, self.eventType)
 
-        self.tb.reply_to(msg, toSend)
+        try:
+            self.tb.reply_to(msg, toSend)
+        except Exception as e:
+            if len(toSend) > 4096:
+                self.tb.reply_to(msg, 'Response too long, try fewer events')
+            else:
+                self.tb.reply_to(msg, f'Unknown error sending message\n{e}')
 
     # responds to server time message with current time
     def time_msg(self, msg):
-            self.tb.reply_to(msg, "Bot time: {}".format(str(datetime.now())))
+            self.tb.reply_to(msg, 'Bot time: {}'.format(str(datetime.now())))
 
     # respond to about message with bot description
     def about_msg(self, msg):
