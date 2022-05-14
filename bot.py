@@ -1,5 +1,5 @@
 import telebot, logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date, time as dtime
 from time import sleep, time
 from sched import scheduler
 
@@ -31,6 +31,8 @@ class EventBot:
         logging.info('Scheduling alerts')
         now = datetime.now()
         
+
+        
         s = scheduler(time, sleep)
         for event in self.events:
             dt = event['datetime']
@@ -40,6 +42,12 @@ class EventBot:
                 in_secs = (dt - timedelta(minutes=10) - now).total_seconds()
                 logging.info(f"Scheduling '{msg}' for {in_secs} secs from now")
                 s.enter(in_secs, 1, self.tb.send_message, (channel, msg))
+
+        # on Friday schedule weekend update at noon
+        if now.weekday() == 4:
+            in_secs = (datetime.combine(date.today(), dtime(hour=10, minute=59)) - now).total_seconds()
+            logging.info(f"Scheduling weekend update for {in_secs} secs from now")
+            s.enter(in_secs, 1, self.weekend_update, [channel])
 
         s.run()
 
@@ -72,6 +80,23 @@ class EventBot:
             else:
                 group = words[1].upper()
         return group, count
+
+    # builds and send weekend update message
+    def weekend_update(self, channel):
+        # filter events
+        today = date.today()
+        monday = datetime.combine(today + timedelta((7 - today.weekday()) % 7), datetime.min.time())
+        selected = filter(lambda event: event['datetime'] > datetime.now() and event['datetime'] < monday, self.events)
+
+        msgs = ['Weekend Update:']
+        for event in selected:
+            msgs.append(self.build_msg(event))
+
+        # build and send message
+        try:
+            self.tb.send_message(channel, '\n'.join(msgs))
+        except:
+            pass
 
     # responds to next event messages
     # messages can have a group and number of events to list
