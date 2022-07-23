@@ -216,21 +216,26 @@ def read_msg(msg):
 # thread to update list of races every day
 def add_races(bot):
     while True:
-        logging.info('Fetching races')
-        races = process_espn("https://www.espn.com/racing/schedule", "NCS")
-        races += process_espn("https://www.espn.com/racing/schedule/_/series/xfinity", "NXS")
-        races += process_espn("https://www.espn.com/racing/schedule/_/series/camping", "NCWTS")
-        races += process_espn("https://www.espn.com/racing/schedule/_/series/indycar", "INDY")
-        races += process_espn_f1("https://www.espn.com/f1/schedule", "F1")
-        races += process_imsa("https://www.imsa.com/weathertech/tv-streaming-schedule/", "IMSA")
-        races += process_imsa("https://www.imsa.com/michelinpilotchallenge/tv-streaming-schedule/", "PILOT")
-        logging.info(f"Found {len(races)} races")
-        races.sort(key=lambda r: r['datetime'])
-        logging.info(str(races))
-        bot.update_events(races)
-        bot.schedule_alerts(MOTOR_CHANNEL)
+        try:
+            logging.info('Fetching races')
+            races = process_espn("https://www.espn.com/racing/schedule", "NCS")
+            races += process_espn("https://www.espn.com/racing/schedule/_/series/xfinity", "NXS")
+            races += process_espn("https://www.espn.com/racing/schedule/_/series/camping", "NCWTS")
+            races += process_espn("https://www.espn.com/racing/schedule/_/series/indycar", "INDY")
+            races += process_espn_f1("https://www.espn.com/f1/schedule", "F1")
+            races += process_imsa("https://www.imsa.com/weathertech/tv-streaming-schedule/", "IMSA")
+            races += process_imsa("https://www.imsa.com/michelinpilotchallenge/tv-streaming-schedule/", "PILOT")
+            logging.info(f"Found {len(races)} races")
+            races.sort(key=lambda r: r['datetime'])
+            logging.info(str(races))
+            bot.update_events(races)
+            bot.schedule_alerts(MOTOR_CHANNEL)
+            bot.schedule_weekend_update(MOTOR_CHANNEL)
 
-        sleep(60 * 60 * 24)
+            sleep(60 * 60 * 24)
+        except e:
+            logging.error('Error updating events')
+            logging.error(e)
 
 logging.basicConfig(filename='motorlog.txt',
                     filemode='a',

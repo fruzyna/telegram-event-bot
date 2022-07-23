@@ -31,8 +31,6 @@ class EventBot:
         logging.info('Scheduling alerts')
         now = datetime.now()
         
-
-        
         s = scheduler(time, sleep)
         for event in self.events:
             dt = event['datetime']
@@ -50,6 +48,19 @@ class EventBot:
             s.enter(in_secs, 1, self.weekend_update, [channel])
 
         s.run()
+
+    # schedules weekend update on Friday
+    def schedule_weekend_update(self, channel):
+        logging.info('Scheduling weekend update')
+        now = datetime.now()
+
+        # on Friday schedule weekend update at noon
+        if now.weekday() == 4:
+            s = scheduler(time, sleep)
+            in_secs = (datetime.combine(date.today(), dtime(hour=10, minute=59)) - now).total_seconds()
+            logging.info(f"Scheduling weekend update for {in_secs} secs from now")
+            s.enter(in_secs, 1, self.weekend_update, [channel])
+            s.run()
 
     # poll so that incoming direct messages can be received
     def listen(self):
