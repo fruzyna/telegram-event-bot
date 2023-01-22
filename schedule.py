@@ -232,3 +232,47 @@ def process_imsa(url, label):
         del races[i]
 
     return races
+
+
+# processes schedules from IndyCar
+def process_indy(url, label):
+    races = []
+
+    # get rows of table
+    page = urlopen(url)
+    html = page.read().decode("utf-8")
+    soup = BeautifulSoup(html, "html.parser")
+    items = soup.find_all("li", class_="schedule-list__item")
+
+    for item in items:
+        name = item.find('a', class_='schedule-list__title').span.string.strip()
+        date = item.find("div", class_='schedule-list__date')
+        month = date.contents[0].strip()
+        day = date.find('span', class_='schedule-list__date-day').string.strip()
+        time = item.find('span', class_='timeEst').string.replace('ET', '').strip()
+        # use noon if time is not yet set
+        if time == 'TBD':
+            dt = datetime.strptime(f"{month} {day} {datetime.now().year} 12:00 PM", '%b %d %Y %I:%M %p')
+        else:
+            dt = datetime.strptime(f"{month} {day} {datetime.now().year} {time}", '%b %d %Y %I:%M %p')
+            dt = dt - timedelta(hours=1)
+
+        # determine TV channel by image
+        tvimg = item.find("div", class_='schedule-list__broadcast').a['href'].upper()
+        tv = 'PEAKCOCK'
+        if 'PEACOCKTV' in tvimg:
+            tv = 'Peacock'
+        elif 'NBCSPORTS' in tvimg:
+            tv = 'NBC'
+        elif 'USANETWORK' in tvimg:
+            tv = 'USA'
+
+        # combine into EventBot compatible dictionary
+        races.append({
+            'group': label,
+            'event': name,
+            'datetime': dt,
+            'channel': tv
+        })
+
+    return races
