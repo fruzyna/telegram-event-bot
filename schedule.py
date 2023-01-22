@@ -164,7 +164,7 @@ def process_espn_f1(url, label):
 
             tv = cells[3].string
             if tv is None:
-                tv = 'Unknown'
+                tv = 'ESPN?'
 
             # combine into EventBot compatible dictionary
             races.append({
@@ -192,6 +192,7 @@ def process_imsa(url, label):
     for row in rows:
         name = row.find('a', class_='onTv-event-title').string.strip()
         name = name.replace(' (Only Available To Stream In The United States On Peacock Premium)', '')
+        name = name.replace(' (Available Globally)', '')
         date = row.find("span", class_='date-display-single').string.split(' -')[0]
         dt = datetime.strptime(date, '%A, %B %d, %Y – %I:%M %p')
         dt = dt - timedelta(hours=1)
