@@ -1,8 +1,6 @@
 from bot import EventBot
+from schedule import process_espn
 
-from urllib.request import urlopen
-from bs4 import BeautifulSoup
-from datetime import datetime, timedelta
 from threading import Thread
 from time import sleep
 
@@ -18,71 +16,6 @@ TOKEN = ""
 # flatten a list of lists
 def flatten(l):
     return [item for sublist in l for item in sublist]
-
-# processes schedules from ESPN.com
-def process_espn(url, label):
-    games = []
-
-    # get rows of table
-    page = urlopen(url)
-    html = page.read().decode("utf-8")
-    soup = BeautifulSoup(html, "html.parser")
-    table = soup.table
-    if table:
-        rows = table.find_all("tr")
-        rows.pop(0)
-
-        for row in rows:
-            cells = row.find_all("td")
-            if cells and len(cells) >= 4:
-                # combine date and time, then interpret
-                date = cells[0].string
-                for i, s in enumerate(cells[2].strings):
-                    if i == 0:
-                        date += ' {}'.format(s)
-                if ':' in date:
-                    dt = datetime.strptime(date, '%a, %b %d %I:%M %p')
-                    # add the current year and remove an hour for central time
-                    dt = dt.replace(year=datetime.now().year)
-                    dt = dt - timedelta(hours=1)
-
-                    # interpret opponent as game
-                    game = cells[1].text
-
-                    # determine TV channel if string
-                    chans = []
-                    if cells[3].string:
-                        chans.append(cells[3].string)
-
-                    # determine TV channel from image
-                    classes = []
-                    classes = flatten([i['class'] for i in cells[3].find_all(['figure', 'img'])])
-                    classes = list(filter(lambda c: c.startswith('network-'), classes))
-
-                    if classes:
-                        if 'network-abc' in classes:
-                            chans.append('ABC')
-                        if 'network-espn+' in classes:
-                            chans.append('ESPN+')
-                        if 'network-espn' in classes:
-                            chans.append('ESPN')
-                        if 'network-hulu' in classes:
-                            chans.append('Hulu')
-
-                    if chans:
-                        tv = ', '.join(chans)
-                    else:
-                        tv = 'Local'
-
-                    # combine into EventBot compatible dictionary
-                    games.append({
-                        'group': label,
-                        'event': game,
-                        'datetime': dt,
-                        'channel': tv
-                    })
-
-    return games
 
 # create bot
 bot = EventBot(TOKEN, "Stick and Ball Bot", "It sources Cubs, Red Sox, Blackhawks, and Marquette schedules from ESPN.com", "team", "game")
